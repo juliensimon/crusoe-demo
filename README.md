@@ -1,5 +1,8 @@
 # crusoe-demo
 
+[![CI](https://github.com/juliensimon/crusoe-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/juliensimon/crusoe-demo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Fine-tune, deploy and evaluate a model on **Crusoe Intelligence Foundry**, end to end, from one
 Python file.
 
@@ -47,14 +50,14 @@ re-run it).
 | `upload` | `client.files.create(purpose="fine-tune")` |
 | `estimate` | Asks the API what the job will cost before creating it |
 | `train` | `client.fine_tuning.jobs.create(...)`: 3 epochs, LoRA rank 16 |
-| `watch` | Streams job events and training/validation loss until the job ends |
+| `watch` | Polls job events and training/validation loss every 30 s until the job ends |
 | `checkpoints` | Lists checkpoints and picks the one with the lowest validation loss |
-| `lora` | Loads the adapter onto serverless inference (see the note below) |
-| `deploy` | Creates a dedicated self-serve deployment; `--with-base` also deploys the base model |
+| `lora` | Loads the chosen checkpoint onto serverless inference (see the note below) |
+| `deploy` | Deploys the same checkpoint on the cheapest LoRA-capable flavor for the model; `--with-base` also deploys the base model |
 | `wait-ready` | Polls until the deployments are ready |
 | `chat` | One chat completion against the deployment |
 | `eval` | Scores base, zero-shot reference(s), serverless adapter and deployment |
-| `cleanup` | Deletes the deployments and the serverless adapter. **Run it.** |
+| `cleanup` | Deletes the deployments and the serverless adapter, waits until they are gone, and flags any deployment with this script's names still in the project. **Run it.** |
 
 The script uses three Crusoe endpoints:
 
@@ -71,7 +74,7 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 cp .env.example .env        # add your Intelligence API key and project ID
 uv sync --group dev
-uv run pytest -q            # pure-function tests; the API stages are not mocked
+uv run pytest               # pure-function tests; the API stages are not mocked
 
 uv run demo.py probe
 uv run demo.py prepare
@@ -90,8 +93,9 @@ uv run demo.py cleanup      # deployments bill by the hour until you run this
 
 `uv run demo.py all --with-base` runs `probe` through `eval` in one go.
 
-> **Cost warning.** Each dedicated deployment is an NVIDIA H100 at $5.50/hour (price list,
-> 2026-09-27), billed until deleted. `cleanup` deletes only what `state.json` says this script
+> **Cost warning.** `deploy` picks the cheapest LoRA-capable flavor for the model (for Qwen3.5-9B on
+> 2026-09-27: 1× NVIDIA H100 at $5.50/hour), billed per second until deleted, and refuses to go
+> above `--max-hourly` (default $12/h for everything it creates). `cleanup` deletes only what `state.json` says this script
 > created, so don't delete `state.json` before running it.
 
 ## Things worth knowing
