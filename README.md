@@ -16,26 +16,27 @@ model prompted zero-shot, on 180 held-out messages.
 
 ## Results
 
-Measured on 2026-09-27, 180 held-out messages, 15 intents, temperature 0, thinking disabled:
+From the recorded run, 2026-09-27: 180 held-out messages, 15 intents, temperature 0, thinking
+disabled, zero failed calls.
 
 | Model | Served on | Correct | Accuracy |
 |---|---|---:|---:|
-| Qwen3.5-9B, base | dedicated NVIDIA H100 | 127/180 | 70.6% |
+| Qwen3.5-9B, base | dedicated NVIDIA H100 | 126/180 | 70.0% |
 | Gemma 4 31B, zero-shot | serverless | 140/180 | 77.8% |
-| **Qwen3.5-9B + LoRA adapter** | serverless | 162/180 | **90.0%** |
-| **Qwen3.5-9B + LoRA adapter** | dedicated NVIDIA H100 | 162/180 | **90.0%** |
+| **Qwen3.5-9B + LoRA adapter** | serverless | 164/180 | **91.1%** |
+| **Qwen3.5-9B + LoRA adapter** | dedicated NVIDIA H100 | 160/180 | **88.9%** |
 
-The serverless adapter and the dedicated deployment gave the same answer on 179 of 180 messages.
+The same adapter on the two serving paths gave the same answer on 176 of 180 messages.
 
 | Step | Measured |
 |---|---|
 | Price estimate for the fine-tuning job | $0.12 |
-| Job submitted → training finished | 5 min 39 s |
-| Adapter loaded on serverless | 26 s |
-| Dedicated deployment ready | 5.6 min |
-| GPU time, two deployments, ~7 min each | $0.58 each |
+| Job submitted → finished | about 6 min |
+| Dedicated deployment ready | about 5 min |
+| GPU cost | $5.50/h per deployment, billed per second (a rehearsal with ~7 min per deployment: $0.58 each) |
 
-Your numbers will differ. Zero-shot scores moved by ±1 between runs; the fine-tuned scores did not.
+Your numbers will differ. Across three runs, zero-shot scores moved by ±1; the fine-tuned scores
+moved by up to 4 messages between serving paths.
 
 ## How it works
 
@@ -111,10 +112,11 @@ These were true on 2026-09-27.
   `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`. Without it, on the serverless
   adapter, the model used all 512 tokens reasoning and never returned a label. On the dedicated
   deployment it returned the label but used 85 tokens instead of 4.
-- **Serverless adapter loading is undocumented.** The `lora` stage uses `POST /foundry/loras`, which
-  is in the API spec but not in the docs. The docs describe serverless inference as base models
-  only. Call the adapter by its `ftmodel-…` ID, not its `endpoint_alias`. Loaded adapters expire
-  after a while; the documented way to serve a fine-tuned model is a dedicated deployment.
+- **Serverless adapter loading is in the API reference, not the guides.** The `lora` stage uses
+  `POST /foundry/loras`, documented in the [API reference](https://docs.crusoecloud.com/api/) as
+  "Deploys a LoRA adapter (a fine-tuned model) onto its parent base model". No guide covers it yet.
+  Call the adapter by its `ftmodel-…` ID, not its `endpoint_alias`. Loaded adapters expire after a
+  while; for a long-lived endpoint, use a dedicated deployment.
 - **Deploying the base model** (`--with-base`) sends `"fine_tuned_model": ""`, an empty string.
 - **Deployment status strings are lowercase** on the wire (`creating`, `ready`).
 - **The fine-tuning `model` parameter is the catalog ID** (`model-qwen-qwen3-5-9b-…`), not the
