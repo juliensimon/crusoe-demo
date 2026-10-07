@@ -449,8 +449,8 @@ def chosen_adapter(state: dict) -> str:
 def stage_lora(state: dict, args: Args) -> None:
     """Load the adapter onto serverless inference via /foundry/loras.
 
-    In the API spec but not in the docs, which describe serverless as base models only.
-    Loaded adapters expire after a while; the documented serving path is a deployment.
+    In the API reference (docs.crusoecloud.com/api/); no guide covers it yet.
+    Loaded adapters expire after a while; for a long-lived endpoint, use a deployment.
     """
     header("lora")
     if state.get("lora"):
