@@ -6,8 +6,9 @@
 Fine-tune, deploy and evaluate a model on **Crusoe Intelligence Foundry**, end to end, from one
 Python file.
 
-This is the code from my YouTube video on Crusoe Intelligence Foundry. The video is sponsored by
-Crusoe. The code, the measurements and the opinions are mine.
+This is the code from my YouTube video,
+[Fine-Tuning Qwen3.5-9B on Crusoe Intelligence Foundry: from 70% to 91% for $0.12](https://youtu.be/9d2xYP1WlRo).
+The video is sponsored by Crusoe. The code, the measurements and the opinions are mine.
 
 The script fine-tunes **Qwen3.5-9B** with a LoRA adapter on 600 real banking customer-support
 messages (15 intents from Banking77). It serves the adapter two ways, on serverless inference and
